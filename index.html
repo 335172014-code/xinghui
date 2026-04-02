@@ -154,6 +154,7 @@
     <div class="h-stat"><div class="h-stat-v" id="stat-types">-</div><div class="h-stat-l">类型</div></div>
     <div class="h-stat"><div class="h-stat-v" id="stat-industries">-</div><div class="h-stat-l">行业</div></div>
   </div>
+  <button id="ai-toggle" onclick="toggleAIMode()" style="position:absolute;right:12px;top:42px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:12px;color:#fff;font-size:11px;padding:3px 10px;cursor:pointer;font-family:inherit;font-weight:600;" title="切换AI智能分析模式">🤖 AI</button>
 </header>
 
 <div class="main">
@@ -308,13 +309,207 @@ function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send
 function autoResize(el) { el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,120)+"px"; }
 function setInput(t) { const el=document.getElementById("chat-input"); el.value=t; autoResize(el); el.focus(); }
 
+// ============ AI 配置 ============
+let useAI = false;
+const DEEPSEEK_KEY = 'sk-8eb1dfe1032e457c9ee19dcdccb247e5';
+
+function toggleAIMode() {
+  useAI = !useAI;
+  const btn = document.getElementById('ai-toggle');
+  if (useAI) {
+    btn.style.background = 'rgba(255,255,255,.9)';
+    btn.style.color = '#4f46e5';
+    btn.textContent = '🤖 AI ON';
+    toast('✅ 已切换到 AI 智能分析模式');
+  } else {
+    btn.style.background = 'rgba(255,255,255,.2)';
+    btn.style.color = '#fff';
+    btn.textContent = '🤖 AI';
+    toast('🔤 已切换到关键词模式');
+  }
+}
+
 function sendMsg() {
   const el = document.getElementById("chat-input");
   const txt = el.value.trim(); if(!txt) return;
   addMsg(txt,'user'); el.value=''; el.style.height='auto';
   document.getElementById("typing").style.display="flex";
   scrollChat();
-  setTimeout(()=>{ document.getElementById('typing').style.display='none'; addMsg(analyzeNeeds(txt),'bot'); }, 800);
+  if (useAI) {
+    analyzeWithAI(txt);
+  } else {
+    setTimeout(()=>{ document.getElementById('typing').style.display='none'; addMsg(analyzeNeeds(txt),'bot'); }, 800);
+  }
+}
+
+// ============ AI 智能分析 ============
+async function analyzeWithAI(text) {
+  try {
+    const systemPrompt = `你是一个售前咨询助手，分析客户需求并匹配产品。
+产品类型有4种：实地人事、远程人事、远程备案、PTA
+产品字段：type(类型), industry(行业), company(公司), position(职位), form(形式), duration(时长/月), location(城市), benefits(福利), requirements(要求), price12m(12个月价格), price3m(3个月价格), jd(职位描述), note(备注)
+
+请分析用户消息，提取以下信息（JSON格式）：
+{
+  "cities": ["城市列表"],
+  "industries": ["行业列表"],
+  "positions": ["职位关键词"],
+  "forms": ["实地/远程"],
+  "duration": "时长偏好（如3个月/6个月）",
+  "budget": "预算范围（如5000、10000）",
+  "requirements": ["其他需求如推荐信、背调等"],
+  "explanation": "对用户需求的简要解释（1-2句话）"
+}
+
+只返回JSON，不要其他内容。`;
+
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DEEPSEEK_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 500
+      })
+    });
+
+    const data = await response.json();
+    document.getElementById('typing').style.display='none';
+
+    if (data.error) {
+      addMsg('⚠️ AI 分析失败：' + data.error.message + '\n\n已自动切换回关键词模式', 'bot');
+      useAI = false;
+      document.getElementById('ai-toggle').textContent = '🤖 AI';
+      return;
+    }
+
+    const content = data.choices[0].message.content.trim();
+    let parsed;
+    try {
+      // 尝试解析JSON
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        parsed = JSON.parse(content);
+      }
+    } catch (e) {
+      // JSON解析失败，使用关键词模式
+      addMsg(analyzeNeeds(text), 'bot');
+      return;
+    }
+
+    // 用AI解析的参数进行搜索
+    const result = searchWithAIParams(text, parsed);
+    addMsg(result, 'bot');
+
+  } catch (err) {
+    document.getElementById('typing').style.display='none';
+    addMsg('⚠️ 网络错误：' + err.message + '\n\n请检查网络连接，已切换回关键词模式', 'bot');
+    useAI = false;
+  }
+}
+
+function searchWithAIParams(originalText, params) {
+  // 基于AI解析的参数搜索产品
+  const needs = {
+    cities: params.cities || [],
+    industries: params.industries || [],
+    positions: params.positions || [],
+    forms: params.forms || [],
+    kws: [],
+    duration: params.duration || '',
+    budget: params.budget || '',
+    requirements: params.requirements || [],
+    explanation: params.explanation || ''
+  };
+
+  // 评分搜索
+  let scored = KB_ITEMS.map(item => {
+    let s = 0;
+    const it = ((item.company||'')+(item.position||'')+(item.industry||'')+(item.type||'')+(item.location||'')+(item.jd||'')+(item.note||'')).toLowerCase();
+
+    // 城市匹配（最高权重）
+    needs.cities.forEach(c => {
+      if (item.location && item.location.includes(c)) s += 15;
+      if (it.includes(c.toLowerCase())) s += 5;
+    });
+
+    // 行业匹配
+    needs.industries.forEach(ind => {
+      if (item.industry && item.industry.toLowerCase().includes(ind.toLowerCase())) s += 12;
+      if (it.includes(ind.toLowerCase())) s += 5;
+    });
+
+    // 职位匹配
+    needs.positions.forEach(p => {
+      if (item.position && item.position.toLowerCase().includes(p.toLowerCase())) s += 12;
+      if (it.includes(p.toLowerCase())) s += 4;
+    });
+
+    // 形式匹配
+    needs.forms.forEach(f => {
+      if ((item.form && item.form.includes(f)) || (item.type && item.type.includes(f))) s += 10;
+    });
+
+    // 预算匹配
+    if (needs.budget) {
+      const budget = parseInt(needs.budget.toString().replace(/[^0-9]/g,''));
+      if (budget && item.price12m) {
+        if (item.price12m <= budget * 1.2) s += 8; // 在预算内或略高
+      }
+    }
+
+    // 时长匹配
+    if (needs.duration) {
+      const dur = needs.duration.toString();
+      if (item.duration && (item.duration.includes(dur) || dur.includes(item.duration))) s += 6;
+    }
+
+    // 其他需求关键词
+    needs.requirements.forEach(req => {
+      if (it.includes(req.toLowerCase())) s += 5;
+    });
+
+    // 原文关键词
+    originalText.toLowerCase().split(/[\s\n\uff0c,\u3002\uff01!\uff1f?]+/).filter(w=>w.length>1).forEach(w=>{
+      if(it.includes(w) && w.length>2) s += 2;
+    });
+
+    return {item, s};
+  });
+
+  scored.sort((a,b)=>b.s-a.s);
+  let matches = scored.filter(m=>m.s>0);
+  if (!matches.length) matches = scored.slice(0,5);
+
+  // 构建回复
+  let r = '🎯 AI 智能分析结果\n\n';
+  if (needs.explanation) {
+    r += '📝 ' + needs.explanation + '\n\n';
+  }
+  r += '📍 城市：'+(needs.cities.length?needs.cities.join('、'):'未指定')+'\n';
+  r += '🏢 行业：'+(needs.industries.length?needs.industries.join('、'):'未指定')+'\n';
+  r += '💼 岗位：'+(needs.positions.length?needs.positions.join('、'):'未指定')+'\n';
+  r += '📋 形式：'+(needs.forms.length?needs.forms.join('、'):'未指定')+'\n';
+  if (needs.budget) r += '💰 预算：'+(needs.budget)+'\n';
+  if (needs.duration) r += '⏱️ 时长：'+(needs.duration)+'\n';
+  if (needs.requirements.length) r += '✨ 其他：'+(needs.requirements.join('、'))+'\n';
+  r += '\n找到 '+Math.min(matches.length,5)+' 个最匹配岗位：\n\n';
+  matches.slice(0,5).forEach((m,i)=>{
+    const stars = m.s>=25?'⭐⭐⭐⭐⭐':m.s>=18?'⭐⭐⭐⭐':m.s>=10?'⭐⭐⭐':'⭐⭐';
+    r += (i+1)+'. 【'+m.item.company+'】'+m.item.position+' '+stars+'\n';
+    r += '   📍'+(m.item.location||'待定')+' 💰￥'+(m.item.price12m||0).toLocaleString()+' '+(m.item.type||'')+'\n\n';
+  });
+  r += '💡 点击底部「搜索」标签可查看完整JD并生成回复话术！';
+  return r;
 }
 
 function addMsg(text, role) {
