@@ -129,6 +129,9 @@
     .rbtn.copy { background:var(--primary); color:#fff; }
     .rbtn.regen { background:var(--bg); color:var(--text); border:1.5px solid var(--border); }
     .rbtn:active { transform:scale(.96); }
+    .poster-btn-wrap { text-align:center; }
+    .poster-btn { background:linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff; border:none; padding:12px 24px; border-radius:25px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; box-shadow:0 4px 12px rgba(99,102,241,.3); }
+    .poster-btn:active { transform:scale(.96); }
 
     .empty { text-align:center; padding:40px 20px; color:var(--muted); }
     .empty-ico { font-size:48px; margin-bottom:12px; }
@@ -273,9 +276,15 @@
         <button class="rbtn copy" onclick="copyReply()">📋 复制话术</button>
         <button class="rbtn regen" onclick="regenReply()">🔄 换一个</button>
       </div>
+      <div class="poster-btn-wrap" style="margin-top:16px">
+        <button class="poster-btn" onclick="downloadPoster()">🖼️ 下载海报</button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- 海报生成 Canvas (隐藏) -->
+<canvas id="poster-canvas" style="display:none" width="750" height="1100"></canvas>
 
 <div class="toast" id="toast"></div>
 
@@ -623,6 +632,180 @@ function regenReply() {
   while(t===cur&&replyTpls.length>1&&i++<5) t=replyTpls[Math.floor(Math.random()*replyTpls.length)];
   document.getElementById('reply-content').textContent=t;
   toast('🔄 已换一套话术');
+}
+
+// ============ 下载海报功能 ============
+function downloadPoster() {
+  if(!curItem) { toast('⚠️ 请先选择一个岗位'); return; }
+  const item = curItem;
+  const canvas = document.getElementById('poster-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // 画布尺寸 750x1100
+  const w = 750, h = 1100;
+  
+  // 渐变背景
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, '#667eea');
+  grad.addColorStop(1, '#764ba2');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  
+  // 顶部装饰圆
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath();
+  ctx.arc(w - 80, 120, 180, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(80, h - 100, 120, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 顶部标题背景
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  roundRect(ctx, 40, 50, w - 80, 80, 20);
+  ctx.fill();
+  
+  // 标题文字
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 36px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🌟 实习推荐', w/2, 100);
+  
+  // 公司名称卡片
+  ctx.fillStyle = '#fff';
+  roundRect(ctx, 40, 160, w - 80, 100, 16);
+  ctx.fill();
+  
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = 'bold 32px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'left';
+  const co = item.company || '知名企业';
+  ctx.fillText(co, 60, 215);
+  
+  // 岗位名称
+  ctx.fillStyle = '#666';
+  ctx.font = '26px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(item.position || '实习岗位', 60, 248);
+  
+  // 信息卡片
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  roundRect(ctx, 40, 280, w - 80, 280, 16);
+  ctx.fill();
+  
+  ctx.fillStyle = '#333';
+  ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
+  const infoY = 330;
+  const lineHeight = 50;
+  
+  const infoItems = [
+    ['🏢', '行业', item.industry || '待定'],
+    ['📍', '地点', item.location || '待定'],
+    ['⏱️', '时长', item.duration || '可协商'],
+    ['📋', '形式', item.form || '实地'],
+    ['💰', '12个月', item.price12m ? '￥' + item.price12m.toLocaleString() : '面议']
+  ];
+  
+  infoItems.forEach(([icon, label, val], i) => {
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'left';
+    ctx.font = '24px "PingFang SC", sans-serif';
+    ctx.fillText(icon + ' ' + label + '：', 60, infoY + i * lineHeight);
+    ctx.fillStyle = '#667eea';
+    ctx.font = 'bold 24px "PingFang SC", sans-serif';
+    ctx.fillText(val, 200, infoY + i * lineHeight);
+  });
+  
+  // 岗位描述标题
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  roundRect(ctx, 40, 580, w - 80, 60, 16);
+  ctx.fill();
+  ctx.fillStyle = '#667eea';
+  ctx.font = 'bold 26px "PingFang SC", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('📄 岗位描述', 60, 620);
+  
+  // 岗位描述内容
+  const jdText = item.jd || '暂无详细描述';
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  roundRect(ctx, 40, 660, w - 80, 200, 16);
+  ctx.fill();
+  
+  ctx.fillStyle = '#555';
+  ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textAlign = 'left';
+  wrapText(ctx, jdText, 60, 700, w - 120, 36);
+  
+  // 收获福利
+  if(item.benefits) {
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    roundRect(ctx, 40, 880, w - 80, 80, 16);
+    ctx.fill();
+    ctx.fillStyle = '#667eea';
+    ctx.font = 'bold 24px "PingFang SC", sans-serif';
+    ctx.fillText('🎁 收获：' + item.benefits.substring(0, 30), 60, 920);
+    if(item.benefits.length > 30) {
+      ctx.fillText(item.benefits.substring(30, 60), 60, 950);
+    }
+  }
+  
+  // 底部二维码区域提示
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  roundRect(ctx, 40, h - 120, w - 80, 70, 16);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px "PingFang SC", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('扫码了解更多岗位', w/2, h - 75);
+  ctx.font = '16px "PingFang SC", sans-serif';
+  ctx.fillText('星辉售前助手', w/2, h - 45);
+  
+  // 下载
+  const link = document.createElement('a');
+  link.download = (item.company || '岗位') + '_' + (item.position || '实习') + '_海报.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('✅ 海报已下载');
+}
+
+// 圆角矩形辅助函数
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// 文字换行辅助函数
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const paragraphs = text.split('\n');
+  let currentY = y;
+  
+  paragraphs.forEach(para => {
+    const words = para.split('');
+    let line = '';
+    
+    for(let i = 0; i < words.length; i++) {
+      const testLine = line + words[i];
+      const metrics = ctx.measureText(testLine);
+      
+      if(metrics.width > maxWidth && i > 0) {
+        ctx.fillText(line, x, currentY);
+        line = words[i];
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, currentY);
+    currentY += lineHeight;
+  });
 }
 
 function analyzeNeeds(text) {
