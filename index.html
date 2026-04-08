@@ -157,7 +157,6 @@
     <div class="h-stat"><div class="h-stat-v" id="stat-types">-</div><div class="h-stat-l">类型</div></div>
     <div class="h-stat"><div class="h-stat-v" id="stat-industries">-</div><div class="h-stat-l">行业</div></div>
   </div>
-  <button id="ai-toggle" onclick="toggleAIMode()" style="position:absolute;right:12px;top:42px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:12px;color:#fff;font-size:11px;padding:3px 10px;cursor:pointer;font-family:inherit;font-weight:600;" title="切换AI智能分析模式">🤖 AI</button>
 </header>
 
 <div class="main">
@@ -172,7 +171,6 @@
         <div class="qas">
           <button class="qbtn" onclick="setInput('我想找金融行业的远程实习')">💼 金融远程</button>
           <button class="qbtn" onclick="setInput('有互联网大厂的产品经理岗位吗')">🌐 互联网产品</button>
-          <button class="qbtn" onclick="setInput('预算5000左右，推荐一下')">💰 预算5000</button>
           <button class="qbtn" onclick="setInput('需要推荐信和背调支持')">📝 推荐信背调</button>
         </div>
       </div>
@@ -204,13 +202,6 @@
           <option value="PTA">PTA</option>
         </select>
         <select class="fsel" id="filter-industry" onchange="doSearch()"><option value="">所有行业</option></select>
-        <select class="fsel" id="filter-price" onchange="doSearch()">
-          <option value="">所有价格</option>
-          <option value="0-5000">¥0-5000</option>
-          <option value="5000-8000">¥5000-8000</option>
-          <option value="8000-10000">¥8000-10000</option>
-          <option value="10000+">¥10000+</option>
-        </select>
         <select class="fsel" id="filter-location" onchange="doSearch()">
           <option value="">所有地点</option>
           <option value="远程">远程</option>
@@ -253,9 +244,8 @@
       <div class="d-pos" id="d-pos">-</div>
     </div>
     <div class="dbody">
-      <div class="pbox">
-        <div class="pitem"><div class="plbl">💰 12个月方案</div><div class="pval" id="d-p12">-</div></div>
-        <div class="pitem"><div class="plbl">📅 短期方案</div><div class="pval" style="font-size:14px" id="d-p3">-</div></div>
+      <div style="background:linear-gradient(135deg,#ede9fe,#fce7f3);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:13px;color:#6d28d9;font-weight:600;">💬 费用详情请微信咨询顾问</div>
       </div>
       <div class="igrid">
         <div class="iitem"><div class="ilbl">📋 实习形式</div><div class="ival" id="d-form">-</div></div>
@@ -318,25 +308,8 @@ function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send
 function autoResize(el) { el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,120)+"px"; }
 function setInput(t) { const el=document.getElementById("chat-input"); el.value=t; autoResize(el); el.focus(); }
 
-// ============ AI 配置 ============
-let useAI = false;
+// ============ AI 配置（默认开启）============
 const DEEPSEEK_KEY = 'sk-8eb1dfe1032e457c9ee19dcdccb247e5';
-
-function toggleAIMode() {
-  useAI = !useAI;
-  const btn = document.getElementById('ai-toggle');
-  if (useAI) {
-    btn.style.background = 'rgba(255,255,255,.9)';
-    btn.style.color = '#4f46e5';
-    btn.textContent = '🤖 AI ON';
-    toast('✅ 已切换到 AI 智能分析模式');
-  } else {
-    btn.style.background = 'rgba(255,255,255,.2)';
-    btn.style.color = '#fff';
-    btn.textContent = '🤖 AI';
-    toast('🔤 已切换到关键词模式');
-  }
-}
 
 function sendMsg() {
   const el = document.getElementById("chat-input");
@@ -344,11 +317,7 @@ function sendMsg() {
   addMsg(txt,'user'); el.value=''; el.style.height='auto';
   document.getElementById("typing").style.display="flex";
   scrollChat();
-  if (useAI) {
-    analyzeWithAI(txt);
-  } else {
-    setTimeout(()=>{ document.getElementById('typing').style.display='none'; addMsg(analyzeNeeds(txt),'bot'); }, 800);
-  }
+  analyzeWithAI(txt);
 }
 
 // ============ AI 智能分析 ============
@@ -393,9 +362,7 @@ async function analyzeWithAI(text) {
     document.getElementById('typing').style.display='none';
 
     if (data.error) {
-      addMsg('⚠️ AI 分析失败：' + data.error.message + '\n\n已自动切换回关键词模式', 'bot');
-      useAI = false;
-      document.getElementById('ai-toggle').textContent = '🤖 AI';
+      addMsg('⚠️ AI 分析失败，已自动切换为关键词模式\n\n' + analyzeNeeds(text || ''), 'bot');
       return;
     }
 
@@ -421,8 +388,7 @@ async function analyzeWithAI(text) {
 
   } catch (err) {
     document.getElementById('typing').style.display='none';
-    addMsg('⚠️ 网络错误：' + err.message + '\n\n请检查网络连接，已切换回关键词模式', 'bot');
-    useAI = false;
+    addMsg('⚠️ 网络连接失败，为您切换关键词模式查询\n\n' + analyzeNeeds(text), 'bot');
   }
 }
 
@@ -515,7 +481,7 @@ function searchWithAIParams(originalText, params) {
   matches.slice(0,5).forEach((m,i)=>{
     const stars = m.s>=25?'⭐⭐⭐⭐⭐':m.s>=18?'⭐⭐⭐⭐':m.s>=10?'⭐⭐⭐':'⭐⭐';
     r += (i+1)+'. 【'+m.item.company+'】'+m.item.position+' '+stars+'\n';
-    r += '   📍'+(m.item.location||'待定')+' 💰￥'+(m.item.price12m||0).toLocaleString()+' '+(m.item.type||'')+'\n\n';
+    r += '   📍'+(m.item.location||'待定')+' 💬微信咨询费用 '+(m.item.type||'')+'\n\n';
   });
   r += '💡 点击底部「搜索」标签可查看完整JD并生成回复话术！';
   return r;
@@ -536,17 +502,10 @@ function doSearch() {
   const ind=document.getElementById('filter-industry').value;
   const type=document.getElementById('filter-type').value;
   const loc=document.getElementById('filter-location').value;
-  const prc=document.getElementById('filter-price').value;
   let res = KB_ITEMS.filter(item=>{
     if(ind&&item.industry!==ind) return false;
     if(type&&item.type!==type) return false;
     if(loc&&!(item.location&&item.location.includes(loc))) return false;
-    if(prc){ const p=item.price12m||0;
-      if(prc==='0-5000'&&p>5000) return false;
-      if(prc==='5000-8000'&&(p<5000||p>8000)) return false;
-      if(prc==='8000-10000'&&(p<8000||p>10000)) return false;
-      if(prc==='10000+'&&p<10000) return false;
-    }
     if(kw){ const t=((item.company||'')+' '+(item.position||'')+' '+(item.industry||'')+' '+(item.jd||'')).toLowerCase(); return t.includes(kw); }
     return true;
   });
@@ -563,7 +522,7 @@ function doSearch() {
       +(item.location?'<span class="rc-tag">📍 '+esc(item.location)+'</span>':'')
       +(item.duration?'<span class="rc-tag">⏱ '+esc(item.duration)+'</span>':'')
       +'</div>'
-      +'<div class="rc-price">💰 ￥'+(item.price12m||0).toLocaleString()+'</div>'
+      +'<div class="rc-price">💬 详情微信咨询</div>'
       +'</div>';
   }).join("");
 }
@@ -574,8 +533,6 @@ function openDetail(idx) {
   document.getElementById('d-type').textContent=item.type||'-';
   document.getElementById('d-industry').textContent=item.industry||'-';
   document.getElementById('d-pos').textContent=item.position||'-';
-  document.getElementById('d-p12').textContent=item.price12m?'￥'+item.price12m.toLocaleString():'面议';
-  document.getElementById('d-p3').textContent=item.price3m||'-';
   document.getElementById('d-form').textContent=item.form||'-';
   document.getElementById('d-dur').textContent=item.duration||'-';
   document.getElementById('d-loc').textContent=item.location||'-';
@@ -595,7 +552,6 @@ function closeDetailDrawer(){ document.getElementById('doverlay').classList.remo
 function genReply() {
   if(!curItem) return;
   const item=curItem;
-  const ps=item.price12m?'￥'+item.price12m.toLocaleString():'面议';
   const co=item.company||'';
   const pos=item.position||'';
   const ind=item.industry||'待定';
@@ -604,11 +560,10 @@ function genReply() {
   const form=item.form||'实地';
   const ben=item.benefits||'实习证明、推荐信等';
   const req=item.requirements||'简历评估+面试';
-  const p3=item.price3m||'详询顾问';
   replyTpls=[
-    '您好！根据您的需求，为您推荐【'+co+'】的'+pos+'岗位。\n\n📋 岗位亮点：\n• 行业领域：'+ind+'\n• 实习地点：'+loc+'\n• 实习时长：'+dur+'\n• 实习形式：'+form+'\n\n💰 费用说明：\n• 12个月方案：'+ps+'\n• '+p3+'\n\n🎁 收获：'+ben+'\n\n如需了解更多详情或安排申请，请随时告诉我！',
-    '为您推荐一个非常适合的岗位：\n\n🏢 '+co+'\n💼 '+pos+'\n\n【基本信息】\n• 所属行业：'+ind+'\n• 工作地点：'+loc+'\n• 实习周期：'+dur+'\n• 工作形式：'+form+'\n\n【项目收获】\n'+ben+'\n\n【费用ㄠ12个月：'+ps+' | '+p3+'\n\n【申请要求】'+req+'\n\n感兴趣的话我可以为您详细介绍申请流程～',
-    '推荐岗位：'+co+' - '+pos+'\n\n✨ 岗位特色：\n- 行业：'+ind+'\n- 地点：'+loc+'\n- 时长：'+dur+'\n- 形式：'+form+'\n\n💵 价格方案：\n- 12个月：'+ps+'\n- '+p3+'\n\n🎯 您将获得：'+ben+'\n📋 申请条件：'+req+'\n\n如需查看详细JD或开始申请，请告诉我！'
+    '您好！根据您的需求，为您推荐【'+co+'】的'+pos+'岗位。\n\n📋 岗位亮点：\n• 行业领域：'+ind+'\n• 实习地点：'+loc+'\n• 实习时长：'+dur+'\n• 实习形式：'+form+'\n\n🎁 收获：'+ben+'\n\n💬 具体费用方案请微信咨询顾问，如需安排申请请随时告诉我！',
+    '为您推荐一个非常适合的岗位：\n\n🏢 '+co+'\n💼 '+pos+'\n\n【基本信息】\n• 所属行业：'+ind+'\n• 工作地点：'+loc+'\n• 实习周期：'+dur+'\n• 工作形式：'+form+'\n\n【项目收获】\n'+ben+'\n\n【申请要求】'+req+'\n\n💬 费用详情请联系微信顾问，感兴趣我可以为您详细介绍申请流程～',
+    '推荐岗位：'+co+' - '+pos+'\n\n✨ 岗位特色：\n- 行业：'+ind+'\n- 地点：'+loc+'\n- 时长：'+dur+'\n- 形式：'+form+'\n\n🎯 您将获得：'+ben+'\n📋 申请条件：'+req+'\n\n💬 费用方案请微信咨询，如需查看详细JD或开始申请，请告诉我！'
   ];
   document.getElementById('reply-content').textContent=replyTpls[Math.floor(Math.random()*replyTpls.length)];
 }
@@ -635,136 +590,225 @@ function regenReply() {
 }
 
 // ============ 下载海报功能 ============
+
+// 根据行业返回主题配置
+function getPosterTheme(industry, type) {
+  const ind = (industry || '').toLowerCase();
+  const tp = (type || '').toLowerCase();
+
+  // 金融 / 投行 / 证券
+  if (ind.includes('金融') || ind.includes('投行') || ind.includes('证券') || ind.includes('银行')) {
+    return { bg1:'#1a2a4a', bg2:'#2d4a7a', accent:'#d4af37', accent2:'#f0d060',
+      badge:'金融精英', icon:'💎', cardBg:'rgba(255,255,255,0.95)', textColor:'#1a2a4a',
+      deco1:'#d4af3740', deco2:'#f0d06030' };
+  }
+  // 科技 / 互联网 / IT
+  if (ind.includes('科技') || ind.includes('互联网') || ind.includes('技术') || ind.includes('it') || ind.includes('软件')) {
+    return { bg1:'#0f172a', bg2:'#1e3a5f', accent:'#00d4ff', accent2:'#7c3aed',
+      badge:'科技前沿', icon:'💻', cardBg:'rgba(240,249,255,0.97)', textColor:'#0f172a',
+      deco1:'#00d4ff20', deco2:'#7c3aed20' };
+  }
+  // 咨询 / 管理
+  if (ind.includes('咨询') || ind.includes('管理') || ind.includes('战略')) {
+    return { bg1:'#1c1c2e', bg2:'#2d2d44', accent:'#ff6b6b', accent2:'#ffd93d',
+      badge:'顶级咨询', icon:'📊', cardBg:'rgba(255,255,255,0.96)', textColor:'#1c1c2e',
+      deco1:'#ff6b6b30', deco2:'#ffd93d30' };
+  }
+  // 医疗 / 医药 / 生物
+  if (ind.includes('医') || ind.includes('生物') || ind.includes('制药') || ind.includes('健康')) {
+    return { bg1:'#0d4a3a', bg2:'#1a6b52', accent:'#4ade80', accent2:'#86efac',
+      badge:'医疗健康', icon:'🏥', cardBg:'rgba(240,255,248,0.97)', textColor:'#0d4a3a',
+      deco1:'#4ade8030', deco2:'#86efac30' };
+  }
+  // 教育 / 学术
+  if (ind.includes('教育') || ind.includes('学术') || ind.includes('研究')) {
+    return { bg1:'#312e81', bg2:'#4338ca', accent:'#fbbf24', accent2:'#fde68a',
+      badge:'学术成长', icon:'🎓', cardBg:'rgba(255,255,255,0.96)', textColor:'#312e81',
+      deco1:'#fbbf2430', deco2:'#fde68a30' };
+  }
+  // 传媒 / 设计 / 广告
+  if (ind.includes('传媒') || ind.includes('设计') || ind.includes('广告') || ind.includes('媒体')) {
+    return { bg1:'#7c2d92', bg2:'#ec4899', accent:'#fde047', accent2:'#fbcfe8',
+      badge:'创意传媒', icon:'🎨', cardBg:'rgba(255,255,255,0.96)', textColor:'#7c2d92',
+      deco1:'#fde04730', deco2:'#fbcfe830' };
+  }
+  // 政府 / 机关 / 科研院所
+  if (tp.includes('实地') || ind.includes('政府') || ind.includes('科研') || ind.includes('院所')) {
+    return { bg1:'#7c3d12', bg2:'#b45309', accent:'#fcd34d', accent2:'#fef3c7',
+      badge:'权威机构', icon:'🏛️', cardBg:'rgba(255,251,235,0.97)', textColor:'#7c3d12',
+      deco1:'#fcd34d30', deco2:'#fef3c730' };
+  }
+  // 默认 (通用紫)
+  return { bg1:'#4338ca', bg2:'#7c3aed', accent:'#f8fafc', accent2:'#c7d2fe',
+    badge:'实习推荐', icon:'🌟', cardBg:'rgba(255,255,255,0.96)', textColor:'#312e81',
+    deco1:'#ffffff20', deco2:'#c7d2fe30' };
+}
+
 function downloadPoster() {
   if(!curItem) { toast('⚠️ 请先选择一个岗位'); return; }
   const item = curItem;
   const canvas = document.getElementById('poster-canvas');
   const ctx = canvas.getContext('2d');
-  
-  // 画布尺寸 750x1100
-  const w = 750, h = 1100;
-  
-  // 渐变背景
-  const grad = ctx.createLinearGradient(0, 0, w, h);
-  grad.addColorStop(0, '#667eea');
-  grad.addColorStop(1, '#764ba2');
+  const W = 750, H = 1200;
+  canvas.width = W; canvas.height = H;
+
+  const theme = getPosterTheme(item.industry, item.type);
+  const font = '"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif';
+
+  // ─── 背景渐变 ───
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, theme.bg1);
+  grad.addColorStop(1, theme.bg2);
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-  
-  // 顶部装饰圆
-  ctx.fillStyle = 'rgba(255,255,255,0.1)';
-  ctx.beginPath();
-  ctx.arc(w - 80, 120, 180, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(80, h - 100, 120, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // 顶部标题背景
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  roundRect(ctx, 40, 50, w - 80, 80, 20);
-  ctx.fill();
-  
-  // 标题文字
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 36px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillRect(0, 0, W, H);
+
+  // ─── 装饰圆 ───
+  ctx.fillStyle = theme.deco1;
+  ctx.beginPath(); ctx.arc(W - 60, 160, 220, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = theme.deco2;
+  ctx.beginPath(); ctx.arc(60, H - 120, 160, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = theme.deco1;
+  ctx.beginPath(); ctx.arc(W/2, H/2, 300, 0, Math.PI*2); ctx.fill();
+
+  // ─── 顶部徽标 ───
+  ctx.fillStyle = theme.accent;
+  roundRect(ctx, 40, 40, 200, 50, 25); ctx.fill();
+  ctx.fillStyle = theme.bg1;
+  ctx.font = `bold 22px ${font}`;
   ctx.textAlign = 'center';
-  ctx.fillText('🌟 实习推荐', w/2, 100);
-  
-  // 公司名称卡片
+  ctx.fillText(theme.icon + ' ' + theme.badge, 140, 73);
+
+  // ─── 主标题：INTERNSHIP ───
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.font = `bold 110px ${font}`;
+  ctx.textAlign = 'left';
+  ctx.fillText('INTERN', 30, 200);
+
+  // ─── 公司名 ───
   ctx.fillStyle = '#fff';
-  roundRect(ctx, 40, 160, w - 80, 100, 16);
-  ctx.fill();
-  
-  ctx.fillStyle = '#1a1a2e';
-  ctx.font = 'bold 32px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.font = `bold 44px ${font}`;
   ctx.textAlign = 'left';
   const co = item.company || '知名企业';
-  ctx.fillText(co, 60, 215);
-  
-  // 岗位名称
-  ctx.fillStyle = '#666';
-  ctx.font = '26px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(item.position || '实习岗位', 60, 248);
-  
-  // 信息卡片
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  roundRect(ctx, 40, 280, w - 80, 280, 16);
-  ctx.fill();
-  
-  ctx.fillStyle = '#333';
-  ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
-  const infoY = 330;
-  const lineHeight = 50;
-  
-  const infoItems = [
-    ['🏢', '行业', item.industry || '待定'],
-    ['📍', '地点', item.location || '待定'],
-    ['⏱️', '时长', item.duration || '可协商'],
-    ['📋', '形式', item.form || '实地'],
-    ['💰', '12个月', item.price12m ? '￥' + item.price12m.toLocaleString() : '面议']
+  const coText = co.length > 14 ? co.substring(0, 14) + '…' : co;
+  ctx.fillText(coText, 40, 240);
+
+  // ─── 岗位名 ───
+  ctx.fillStyle = theme.accent;
+  ctx.font = `bold 30px ${font}`;
+  const pos = item.position || '实习岗位';
+  const posText = pos.length > 20 ? pos.substring(0, 20) + '…' : pos;
+  ctx.fillText(posText, 40, 284);
+
+  // ─── 分割线 ───
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(40, 306); ctx.lineTo(W-40, 306); ctx.stroke();
+
+  // ─── 信息格 (行业/地点/时长/形式) ───
+  const tags = [
+    { icon:'🏢', label:'行业', val: item.industry || '待定' },
+    { icon:'📍', label:'地点', val: item.location || '待定' },
+    { icon:'⏱️', label:'时长', val: item.duration || '可协商' },
+    { icon:'📋', label:'形式', val: item.form || '实地' },
   ];
-  
-  infoItems.forEach(([icon, label, val], i) => {
-    ctx.fillStyle = '#333';
-    ctx.textAlign = 'left';
-    ctx.font = '24px "PingFang SC", sans-serif';
-    ctx.fillText(icon + ' ' + label + '：', 60, infoY + i * lineHeight);
-    ctx.fillStyle = '#667eea';
-    ctx.font = 'bold 24px "PingFang SC", sans-serif';
-    ctx.fillText(val, 200, infoY + i * lineHeight);
+  const tagW = (W - 80 - 30) / 4, tagH = 90, tagY = 322;
+  tags.forEach((t, i) => {
+    const tx = 40 + i * (tagW + 10);
+    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    roundRect(ctx, tx, tagY, tagW, tagH, 12); ctx.fill();
+    ctx.fillStyle = theme.accent;
+    ctx.font = `22px ${font}`;
+    ctx.textAlign = 'center';
+    ctx.fillText(t.icon, tx + tagW/2, tagY + 30);
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = `14px ${font}`;
+    ctx.fillText(t.label, tx + tagW/2, tagY + 50);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold 16px ${font}`;
+    const v = t.val.length > 6 ? t.val.substring(0,6)+'…' : t.val;
+    ctx.fillText(v, tx + tagW/2, tagY + 72);
   });
-  
-  // 岗位描述标题
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  roundRect(ctx, 40, 580, w - 80, 60, 16);
-  ctx.fill();
-  ctx.fillStyle = '#667eea';
-  ctx.font = 'bold 26px "PingFang SC", sans-serif';
+
+  // ─── 岗位描述白卡 ───
+  const cardY = 440, cardH = 500;
+  ctx.fillStyle = theme.cardBg;
+  roundRect(ctx, 40, cardY, W - 80, cardH, 20); ctx.fill();
+
+  // 标题
+  ctx.fillStyle = theme.textColor;
+  ctx.font = `bold 26px ${font}`;
   ctx.textAlign = 'left';
-  ctx.fillText('📄 岗位描述', 60, 620);
-  
-  // 岗位描述内容
+  ctx.fillText('📄 岗位描述', 60, cardY + 42);
+
+  // 描述线条
+  ctx.strokeStyle = theme.accent;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(60, cardY + 54); ctx.lineTo(220, cardY + 54); ctx.stroke();
+
+  // JD 内容
+  ctx.fillStyle = '#444';
+  ctx.font = `22px ${font}`;
+  ctx.textAlign = 'left';
   const jdText = item.jd || '暂无详细描述';
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  roundRect(ctx, 40, 660, w - 80, 200, 16);
-  ctx.fill();
-  
-  ctx.fillStyle = '#555';
-  ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.textAlign = 'left';
-  wrapText(ctx, jdText, 60, 700, w - 120, 36);
-  
-  // 收获福利
-  if(item.benefits) {
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    roundRect(ctx, 40, 880, w - 80, 80, 16);
-    ctx.fill();
-    ctx.fillStyle = '#667eea';
-    ctx.font = 'bold 24px "PingFang SC", sans-serif';
-    ctx.fillText('🎁 收获：' + item.benefits.substring(0, 30), 60, 920);
-    if(item.benefits.length > 30) {
-      ctx.fillText(item.benefits.substring(30, 60), 60, 950);
-    }
+  const maxJdH = wrapTextReturn(ctx, jdText, 60, cardY + 90, W - 120, 34, 8);
+
+  // 收获福利小节
+  if (item.benefits) {
+    const benY = cardY + 90 + maxJdH + 14;
+    ctx.fillStyle = theme.accent;
+    ctx.font = `bold 22px ${font}`;
+    ctx.fillText('🎁 收获与福利', 60, benY);
+    ctx.fillStyle = '#555';
+    ctx.font = `20px ${font}`;
+    const benText = item.benefits.length > 80 ? item.benefits.substring(0, 80) + '…' : item.benefits;
+    wrapTextReturn(ctx, benText, 60, benY + 32, W - 120, 30, 2);
   }
-  
-  // 底部二维码区域提示
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  roundRect(ctx, 40, h - 120, w - 80, 70, 16);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = '20px "PingFang SC", sans-serif';
+
+  // 申请要求小节
+  if (item.requirements) {
+    const reqY = cardY + cardH - 80;
+    ctx.fillStyle = '#999';
+    ctx.font = `18px ${font}`;
+    ctx.textAlign = 'left';
+    ctx.fillText('📋 申请要求：' + (item.requirements.length>50?item.requirements.substring(0,50)+'…':item.requirements), 60, reqY);
+  }
+
+  // ─── 底部：微信咨询 ───
+  ctx.fillStyle = theme.accent;
+  roundRect(ctx, 40, H - 120, W - 80, 70, 35); ctx.fill();
+  ctx.fillStyle = theme.bg1;
+  ctx.font = `bold 28px ${font}`;
   ctx.textAlign = 'center';
-  ctx.fillText('扫码了解更多岗位', w/2, h - 75);
-  ctx.font = '16px "PingFang SC", sans-serif';
-  ctx.fillText('星辉售前助手', w/2, h - 45);
-  
-  // 下载
+  ctx.fillText('💬 详情费用请微信咨询顾问', W/2, H - 76);
+
+  // 星辉水印
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = `18px ${font}`;
+  ctx.textAlign = 'right';
+  ctx.fillText('星辉实习 · 专业顾问团队', W - 40, H - 24);
+
+  // ─── 导出 JPG ───
   const link = document.createElement('a');
-  link.download = (item.company || '岗位') + '_' + (item.position || '实习') + '_海报.png';
-  link.href = canvas.toDataURL('image/png');
+  link.download = (item.company || '岗位') + '_' + (item.position || '实习') + '_海报.jpg';
+  link.href = canvas.toDataURL('image/jpeg', 0.92);
   link.click();
   toast('✅ 海报已下载');
+}
+
+// wrapText：返回实际行数 * lineHeight（用于自适应布局）
+function wrapTextReturn(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+  const chars = text.split('');
+  let line = '', lineCount = 0, curY = y;
+  for (let i = 0; i < chars.length; i++) {
+    const test = line + chars[i];
+    if (ctx.measureText(test).width > maxWidth) {
+      ctx.fillText(line, x, curY);
+      line = chars[i]; curY += lineHeight; lineCount++;
+      if (maxLines && lineCount >= maxLines) { ctx.fillText(line + '…', x, curY); return (lineCount + 1) * lineHeight; }
+    } else { line = test; }
+  }
+  if (line) { ctx.fillText(line, x, curY); lineCount++; }
+  return lineCount * lineHeight;
 }
 
 // 圆角矩形辅助函数
@@ -780,32 +824,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-}
-
-// 文字换行辅助函数
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const paragraphs = text.split('\n');
-  let currentY = y;
-  
-  paragraphs.forEach(para => {
-    const words = para.split('');
-    let line = '';
-    
-    for(let i = 0; i < words.length; i++) {
-      const testLine = line + words[i];
-      const metrics = ctx.measureText(testLine);
-      
-      if(metrics.width > maxWidth && i > 0) {
-        ctx.fillText(line, x, currentY);
-        line = words[i];
-        currentY += lineHeight;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line, x, currentY);
-    currentY += lineHeight;
-  });
 }
 
 function analyzeNeeds(text) {
