@@ -323,20 +323,37 @@ function sendMsg() {
 // ============ AI 智能分析 ============
 async function analyzeWithAI(text) {
   try {
-    const systemPrompt = `你是一个售前咨询助手，分析客户需求并匹配产品。
-产品类型有4种：实地人事、远程人事、远程备案、PTA
-产品字段：type(类型), industry(行业), company(公司), position(职位), form(形式), duration(时长/月), location(城市), benefits(福利), requirements(要求), price12m(12个月价格), price3m(3个月价格), jd(职位描述), note(备注)
+    const systemPrompt = `【角色定义】
+你是星辉实习平台的专业售前咨询助手，面向销售市场和B端客户。你的回复要像资深顾问一样专业、有条理、直击痛点。
 
-请分析用户消息，提取以下信息（JSON格式）：
+【核心能力】
+- 深度理解客户需求，精准匹配岗位
+- 具备分类归纳能力，能将岗位按方向/领域分组展示
+- 提炼每个岗位的核心价值和亮点
+
+【产品知识库】
+- 产品类型：实地人事、远程人事、远程备案、PTA
+- 产品字段：type(类型), industry(行业), company(公司), position(职位), form(形式), duration(时长/月), location(城市), benefits(福利), requirements(要求), price12m(12个月价格), price3m(3个月价格), jd(职位描述), note(备注)
+
+【回答规则】
+1. 必须基于知识库内容，禁止编造
+2. 回复要专业、有条理、分类清晰
+3. 主动提炼岗位核心职责和亮点
+4. 不确定时明确告知，不提供猜测
+
+【输出格式】
+请分析用户消息，提取需求并分类（JSON格式）：
 {
   "cities": ["城市列表"],
   "industries": ["行业列表"],
   "positions": ["职位关键词"],
-  "forms": ["实地/远程"],
-  "duration": "时长偏好（如3个月/6个月）",
-  "budget": "预算范围（如5000、10000）",
-  "requirements": ["其他需求如推荐信、背调等"],
-  "explanation": "对用户需求的简要解释（1-2句话）"
+  "forms": ["实地/远程/不限制"],
+  "duration": "时长偏好",
+  "requirements": ["其他需求"],
+  "relatedKeywords": ["延伸关键词"],
+  "categories": ["分类方向，如：算法与人工智能方向、研发与工程方向"],
+  "summary": "开场总结语，提炼需求+价值点",
+  "confidence": "high/medium/low"
 }
 
 只返回JSON，不要其他内容。`;
@@ -392,8 +409,35 @@ async function analyzeWithAI(text) {
   }
 }
 
+// 智能追问问题库
+const FOLLOW_UP_QUESTIONS = {
+  city: '请问您期望在哪个城市发展？',
+  industry: '您对哪个行业方向比较感兴趣？（如：金融、互联网、医疗、教育等）',
+  form: '您偏好实地实习还是远程实习？',
+  duration: '您计划实习多长时间？（3个月/6个月）',
+  requirement: '有什么特别的要求吗？（如：需要推荐信、支持背调等）'
+};
+
+// 专业方向关键词映射
+const CATEGORY_KEYWORDS = {
+  '算法与人工智能': ['算法', 'ai', '人工智能', '机器学习', '深度学习', 'nlp', 'cv', '推荐', '搜索'],
+  '研发与工程': ['研发', '开发', '前端', '后端', '全栈', 'java', 'python', 'go', 'c++', '客户端'],
+  '数据分析与商业智能': ['数据分析', '数据科学', 'bi', '数据挖掘', '数据分析', '数据运营'],
+  '产品与项目管理': ['产品', '项目经理', 'pm', '产品经理', '项目经理'],
+  '金融与咨询': ['金融', '投行', '咨询', '四大', '审计', '风控', '量化'],
+  '市场与运营': ['运营', '市场营销', '商务', 'BD', '增长', '用户运营', '内容运营'],
+  '设计类': ['ui', 'ux', '设计', '视觉', '交互', '用户体验']
+};
+
+function getCategory(industry, position, jd) {
+  const text = ((industry||'')+(position||'')+(jd||'')).toLowerCase();
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some(k => text.includes(k))) return cat;
+  }
+  return industry || '综合方向';
+}
+
 function searchWithAIParams(originalText, params) {
-  // 基于AI解析的参数搜索产品
   const needs = {
     cities: params.cities || [],
     industries: params.industries || [],
@@ -403,7 +447,11 @@ function searchWithAIParams(originalText, params) {
     duration: params.duration || '',
     budget: params.budget || '',
     requirements: params.requirements || [],
-    explanation: params.explanation || ''
+    explanation: params.explanation || '',
+    relatedKeywords: params.relatedKeywords || [],
+    categories: params.categories || [],
+    summary: params.summary || '',
+    confidence: params.confidence || 'medium'
   };
 
   // 评分搜索
@@ -411,49 +459,38 @@ function searchWithAIParams(originalText, params) {
     let s = 0;
     const it = ((item.company||'')+(item.position||'')+(item.industry||'')+(item.type||'')+(item.location||'')+(item.jd||'')+(item.note||'')).toLowerCase();
 
-    // 城市匹配（最高权重）
     needs.cities.forEach(c => {
       if (item.location && item.location.includes(c)) s += 15;
       if (it.includes(c.toLowerCase())) s += 5;
     });
 
-    // 行业匹配
     needs.industries.forEach(ind => {
       if (item.industry && item.industry.toLowerCase().includes(ind.toLowerCase())) s += 12;
       if (it.includes(ind.toLowerCase())) s += 5;
     });
 
-    // 职位匹配
     needs.positions.forEach(p => {
       if (item.position && item.position.toLowerCase().includes(p.toLowerCase())) s += 12;
       if (it.includes(p.toLowerCase())) s += 4;
     });
 
-    // 形式匹配
+    needs.relatedKeywords.forEach(kw => {
+      if (it.includes(kw.toLowerCase())) s += 6;
+    });
+
     needs.forms.forEach(f => {
       if ((item.form && item.form.includes(f)) || (item.type && item.type.includes(f))) s += 10;
     });
 
-    // 预算匹配
-    if (needs.budget) {
-      const budget = parseInt(needs.budget.toString().replace(/[^0-9]/g,''));
-      if (budget && item.price12m) {
-        if (item.price12m <= budget * 1.2) s += 8; // 在预算内或略高
-      }
-    }
-
-    // 时长匹配
     if (needs.duration) {
       const dur = needs.duration.toString();
       if (item.duration && (item.duration.includes(dur) || dur.includes(item.duration))) s += 6;
     }
 
-    // 其他需求关键词
     needs.requirements.forEach(req => {
       if (it.includes(req.toLowerCase())) s += 5;
     });
 
-    // 原文关键词
     originalText.toLowerCase().split(/[\s\n\uff0c,\u3002\uff01!\uff1f?]+/).filter(w=>w.length>1).forEach(w=>{
       if(it.includes(w) && w.length>2) s += 2;
     });
@@ -465,25 +502,70 @@ function searchWithAIParams(originalText, params) {
   let matches = scored.filter(m=>m.s>0);
   if (!matches.length) matches = scored.slice(0,5);
 
-  // 构建回复
-  let r = '🎯 AI 智能分析结果\n\n';
-  if (needs.explanation) {
-    r += '📝 ' + needs.explanation + '\n\n';
+  // ============ 构建专业销售风格回复 ============
+  let r = '';
+  
+  // 智能追问（信息不足时）
+  if (needs.confidence === 'low' || (matches.length < 2 && !needs.industries.length)) {
+    r += '🔍 为了给您推荐最合适的实习岗位，我想了解一下：\n\n';
+    if (!needs.cities.length) r += '• ' + FOLLOW_UP_QUESTIONS.city + '\n';
+    if (!needs.industries.length) r += '• ' + FOLLOW_UP_QUESTIONS.industry + '\n';
+    if (!needs.forms.length) r += '• ' + FOLLOW_UP_QUESTIONS.form + '\n';
+    r += '\n💬 补充这些信息后，我可以为您精准推荐哦~';
+    return r;
   }
-  r += '📍 城市：'+(needs.cities.length?needs.cities.join('、'):'未指定')+'\n';
-  r += '🏢 行业：'+(needs.industries.length?needs.industries.join('、'):'未指定')+'\n';
-  r += '💼 岗位：'+(needs.positions.length?needs.positions.join('、'):'未指定')+'\n';
-  r += '📋 形式：'+(needs.forms.length?needs.forms.join('、'):'未指定')+'\n';
-  if (needs.budget) r += '💰 预算：'+(needs.budget)+'\n';
-  if (needs.duration) r += '⏱️ 时长：'+(needs.duration)+'\n';
-  if (needs.requirements.length) r += '✨ 其他：'+(needs.requirements.join('、'))+'\n';
-  r += '\n找到 '+Math.min(matches.length,5)+' 个最匹配岗位：\n\n';
-  matches.slice(0,5).forEach((m,i)=>{
-    const stars = m.s>=25?'⭐⭐⭐⭐⭐':m.s>=18?'⭐⭐⭐⭐':m.s>=10?'⭐⭐⭐':'⭐⭐';
-    r += (i+1)+'. 【'+m.item.company+'】'+m.item.position+' '+stars+'\n';
-    r += '   📍'+(m.item.location||'待定')+' 💬微信咨询费用 '+(m.item.type||'')+'\n\n';
+  
+  // ========== 专业开场 + 需求总结 ==========
+  r += '━━━━━━━━━━━━━━━━━\n';
+  if (needs.summary) {
+    r += needs.summary + '\n';
+  } else {
+    r += '✅ 已为您匹配合适的实习岗位！\n';
+    if (needs.cities.length) r += '📍 城市：' + needs.cities.join('、') + ' | ';
+    if (needs.industries.length) r += '🏢 行业：' + needs.industries.join('、');
+    r += '\n';
+  }
+  if (needs.requirements.length) {
+    r += '💡 您的需求：' + needs.requirements.join('、') + '\n';
+  }
+  r += '━━━━━━━━━━━━━━━━━\n\n';
+  
+  // ========== 按方向分类展示 ==========
+  // 给每个岗位分配分类
+  const categorized = {};
+  matches.slice(0,6).forEach(m => {
+    const cat = getCategory(m.item.industry, m.item.position, m.item.jd);
+    if (!categorized[cat]) categorized[cat] = [];
+    if (categorized[cat].length < 2) { // 每个方向最多2个
+      categorized[cat].push(m);
+    }
   });
-  r += '💡 点击底部「搜索」标签可查看完整JD并生成回复话术！';
+  
+  let index = 1;
+  for (const [cat, items] of Object.entries(categorized)) {
+    r += '▌' + cat + '\n';
+    items.forEach(m => {
+      const stars = m.s>=25?'⭐⭐⭐⭐⭐':m.s>=18?'⭐⭐⭐⭐':m.s>=10?'⭐⭐⭐':'⭐⭐';
+      r += index + '. 【' + m.item.company + '】' + m.item.position + '\n';
+      r += '   📝 ' + (m.item.location||'远程') + ' · ' + (m.item.form||'') + ' · ' + (m.item.type||'') + '\n';
+      // 核心职责（从JD提取前50字）
+      if (m.item.jd && m.item.jd.length > 10) {
+        const core = m.item.jd.replace(/<[^>]+>/g,'').substring(0,50);
+        r += '   核心职责：' + core + '...\n';
+      }
+      // 亮点
+      if (m.item.benefits && m.item.benefits.length > 5) {
+        const benefits = m.item.benefits.replace(/<[^>]+>/g,'').substring(0,40);
+        r += '   ✨ ' + benefits + '...\n';
+      }
+      r += '   ' + stars + '\n\n';
+      index++;
+    });
+  }
+  
+  r += '━━━━━━━━━━━━━━━━━\n\n';
+  r += '💬 点击「搜索」标签查看详情并生成回复话术';
+  
   return r;
 }
 
