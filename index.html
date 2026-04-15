@@ -157,14 +157,18 @@ async function analyze(text) {
     }
     // 构建更丰富的候选信息
     const list=cands.slice(0,8).map((item,i)=>{
-      const jd=(item.jd||'暂无').substring(0,100);
-      const req=(item.requirements||'简历评估').substring(0,50);
-      const ben=(item.benefits||'实习证明').substring(0,50);
-      return`【${i+1}】${item.company}｜${item.position}
-行业：${item.industry||'待定'}｜地点：${item.location||'远程'}｜形式：${item.form||'实地'}｜时长：${item.duration||'面议'}
-要求：${req}
+      const name=item.company||item.position||'科研助理';
+      const pos=item.position||item.company||'研究助理';
+      const jd=(item.jd||'暂无描述').substring(0,150).replace(/\n/g,' ');
+      const loc=item.location||'待定';
+      const form=item.form||'实地';
+      const dur=item.duration||'面议';
+      const ben=(item.benefits||'实习证明/推荐信').substring(0,60);
+      return`【${i+1}】${name}
+岗位：${pos}
+地点：${loc} | 形式：${form} | 时长：${dur}
 收获：${ben}
-JD：${jd}`;
+详情：${jd}`;
     }).join('\n\n');
 
     const systemPrompt=`你是星辉实习平台的专业顾问，擅长精准匹配学员需求与实习岗位。
@@ -215,13 +219,48 @@ JD：${jd}`;
 
 function filter(text) {
   const t=text.toLowerCase();
-  const CITIES=['北京','上海','深圳','广州','杭州','成都'];
+  const CITIES=['北京','上海','深圳','广州','杭州','成都','南京','武汉','西安','苏州','天津'];
   const cities=CITIES.filter(c=>t.includes(c));
+
+  // 扩展行业关键词
+  const keywords=[
+    ['投行',['投行','ibd','并购','承销','股权','债券','行研','券商']],
+    ['金融',['金融','银行','证券','基金','信托','保险','资管','期货','投资']],
+    ['咨询',['咨询','顾问','麦肯锡','贝恩','波士顿']],
+    ['四大',['四大会计师事务所','普华永道','德勤','安永','毕马威','四大']],
+    ['科技',['科技','技术','互联网','计算机','软件','AI','数据','算法','开发']],
+    ['市场',['市场','营销','传媒','广告','品牌','运营','新媒体','电商']],
+    ['化学',['化学','化工','材料','生物','医药','制药','医疗','实验室','科研院所']],
+    ['法律',['法律','法务','合规','律师']],
+    ['制造',['制造','工业','生产','供应链','质量']]
+  ];
+
   let scored=KB.map(item=>{
     let s=0;
-    if(cities.length>0&&item.location&&cities.some(c=>item.location.includes(c))) s+=15;
-    if(t.includes('远程')&&(item.form||'').includes('远程')) s+=8;
-    if(t.includes('投行')||t.includes('金融')){if((item.industry||'').includes('金融')) s+=10;}
+    const allText=(item.company||'')+(item.position||'')+(item.industry||'')+(item.jd||'')+(item.type||'').toLowerCase();
+
+    // 城市匹配
+    if(cities.length>0){
+      if(item.location&&cities.some(c=>item.location.includes(c))) s+=25;
+    }
+
+    // 实习形式匹配
+    if(t.includes('远程')&&(item.form||'').includes('远程')) s+=10;
+    if(t.includes('实地')&&(item.form||'').includes('实地')) s+=10;
+
+    // 关键词匹配
+    keywords.forEach(([cat,words])=>{
+      if(words.some(w=>t.includes(w))){
+        if(words.some(w=>allText.includes(w))) s+=15;
+      }
+    });
+
+    // 公司精确匹配
+    const companyUpper=(item.company||'').toUpperCase();
+    if(t.includes('中科院')&&companyUpper.includes('中科院')) s+=30;
+    if(t.includes('中金')&&companyUpper.includes('中金')) s+=25;
+    if(t.includes('华泰')&&companyUpper.includes('华泰')) s+=25;
+
     return{item,s};
   });
   scored.sort((a,b)=>b.s-a.s);
