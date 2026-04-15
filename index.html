@@ -177,19 +177,19 @@ async function analyze(text) {
 - 专业、亲切、有温度
 - 像经验丰富的人脉顾问在帮助朋友
 - 信息层次分明，重点突出
-- 纯文本格式，不要用Markdown
 
 【输出格式】
-━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
 开头：1-2句总结需求，整体亮点
-━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
+
 ▌ 方向一：公司名 - 岗位名
    城市 | 类型 | 时长
    核心职责：（1-2句精华）
    适合人群：（简述）
 
 ▌ 方向二：...
-━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━
 结尾引导语
 
 【重要规则】
@@ -197,7 +197,8 @@ async function analyze(text) {
 - 不显示价格
 - 突出差异化（不同公司/行业/形式）
 - 推荐3-5个最匹配的
-- 用纯文本符号：━━━ ▌ · ：（）`;
+- 绝对禁止：不要用任何Markdown格式（**加粗**、*斜体*、#标题、-列表）
+- 只能用纯文本符号：━━━ ▌ · ：（）`;
 
     const resp=await fetch('https://api.deepseek.com/chat/completions',{
       method:'POST',
@@ -215,7 +216,16 @@ async function analyze(text) {
     const data=await resp.json();
     document.getElementById('typing').style.display='none';
     if(data.error){ addMsg('💡 为您推荐：\n\n'+fallback(text),'bot'); return; }
-    addMsg(data.choices[0].message.content.trim(),'bot');
+
+    // 清理Markdown格式
+    let reply=data.choices[0].message.content.trim();
+    reply=reply.replace(/\*\*(.+?)\*\*/g,'$1');  // 去掉**加粗**
+    reply=reply.replace(/\*(.+?)\*/g,'$1');      // 去掉*斜体*
+    reply=reply.replace(/^#+\s+/gm,'');           // 去掉#标题
+    reply=reply.replace(/^[-*+]\s+/gm,'· ');     // 列表改为 ·
+    reply=reply.replace(/`(.+?)`/g,'$1');        // 去掉`代码`
+
+    addMsg(reply,'bot');
   } catch(err) {
     console.error(err);
     document.getElementById('typing').style.display='none';
