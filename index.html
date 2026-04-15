@@ -156,19 +156,21 @@ async function analyze(text) {
       return;
     }
     // 构建更丰富的候选信息
-    const list=cands.slice(0,8).map((item,i)=>{
+    const list=cands.slice(0,6).map((item,i)=>{
       const name=item.company||item.position||'科研助理';
       const pos=item.position||item.company||'研究助理';
-      const jd=(item.jd||'暂无描述').substring(0,150).replace(/\n/g,' ');
+      const jd=(item.jd||'暂无描述').substring(0,200).replace(/\n/g,' ');
       const loc=item.location||'待定';
       const form=item.form||'实地';
       const dur=item.duration||'面议';
+      const req=item.requirements||'简历评估+面试';
       const ben=(item.benefits||'实习证明/推荐信').substring(0,60);
       return`【${i+1}】${name}
 岗位：${pos}
 地点：${loc} | 形式：${form} | 时长：${dur}
-收获：${ben}
-详情：${jd}`;
+申请要求：${req}
+项目收获：${ben}
+工作内容：${jd}`;
     }).join('\n\n');
 
     const systemPrompt=`你是星辉实习平台的专业顾问，擅长精准匹配学员需求与实习岗位。
@@ -185,8 +187,9 @@ async function analyze(text) {
 
 ▌ 方向一：公司名 - 岗位名
    城市 | 类型 | 时长
-   核心职责：（1-2句精华）
-   适合人群：（简述）
+   核心内容：（从JD提炼，详细描述工作内容）
+   技能要求：（从requirements提炼，需要什么背景/能力）
+   适合人群：（适合什么专业的学生）
 
 ▌ 方向二：...
 ━━━━━━━━━━━━━━━━━━━━
@@ -198,7 +201,8 @@ async function analyze(text) {
 - 突出差异化（不同公司/行业/形式）
 - 推荐3-5个最匹配的
 - 绝对禁止：不要用任何Markdown格式（**加粗**、*斜体*、#标题、-列表）
-- 只能用纯文本符号：━━━ ▌ · ：（）`;
+- 只能用纯文本符号：━━━ ▌ · ：（）
+- 每个岗位要写详细：核心内容、技能要求、适合人群`;
 
     const resp=await fetch('https://api.deepseek.com/chat/completions',{
       method:'POST',
@@ -210,7 +214,7 @@ async function analyze(text) {
           {role:'user',content:'客户需求：'+text+'\n\n【可选岗位】：\n'+list}
         ],
         temperature:0.5,
-        max_tokens:800
+        max_tokens:1200
       })
     });
     const data=await resp.json();
