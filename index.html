@@ -14738,6 +14738,7 @@ function localFilter(text) {
 
 // ============ 第二步：把候选岗位+用户需求喂给 DeepSeek 生成最终回复 ============
 async function analyzeWithAI(text) {
+  document.getElementById('typing').style.display='flex';
   try {
     // 先本地筛选候选岗位
     const candidates = localFilter(text);
@@ -14769,6 +14770,9 @@ async function analyzeWithAI(text) {
 
     const userPrompt = `客户需求：${text}\n\n候选岗位列表：\n${candidateList}`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -14783,13 +14787,16 @@ async function analyzeWithAI(text) {
         ],
         temperature: 0.4,
         max_tokens: 800
-      })
+      }),
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
     const data = await response.json();
     document.getElementById('typing').style.display='none';
 
     if (data.error) {
+      console.log('AI返回错误:', data.error);
       addMsg('⚠️ AI 分析失败，已自动切换为关键词模式\n\n' + analyzeNeeds(text || ''), 'bot');
       return;
     }
@@ -14798,8 +14805,11 @@ async function analyzeWithAI(text) {
     addMsg(reply, 'bot');
 
   } catch (err) {
+    console.error('AI分析错误:', err.message);
     document.getElementById('typing').style.display='none';
-    addMsg('⚠️ 网络连接失败，为您切换关键词模式查询\n\n' + analyzeNeeds(text), 'bot');
+    // AI失败时自动切换关键词模式
+    const fallbackResult = analyzeNeeds(text);
+    addMsg('💡 为您智能匹配到以下推荐：\n\n' + fallbackResult, 'bot');
   }
 }
 
