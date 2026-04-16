@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>星辉实习助手</title>
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;overflow:hidden;height:100vh}
 .app{display:flex;flex-direction:column;height:100%}
@@ -52,9 +53,224 @@ textarea:focus{border-color:#1890ff}
 .greet h1{font-size:22px;color:#333;margin-bottom:12px}
 .greet p{color:#666;font-size:14px;line-height:1.6;margin-bottom:8px}
 .greet small{color:#999;font-size:12px}
+
+
+/* ==================== PC 布局样式 ==================== */
+.pc-header {
+  display: none;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 14px 24px;
+  box-shadow: 0 10px 15px rgba(0,0,0,.07),0 4px 6px rgba(0,0,0,.05);
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pc-main {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  gap: 12px;
+}
+
+.pc-chat-panel,
+.pc-search-panel,
+.pc-detail-panel {
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 10px 15px rgba(0,0,0,.07),0 4px 6px rgba(0,0,0,.05);
+  overflow: hidden;
+}
+
+.pc-chat-panel { flex: 1.2; display: flex; flex-direction: column; }
+.pc-search-panel { flex: 1; display: flex; flex-direction: column; }
+.pc-detail-panel { flex: 1; display: flex; flex-direction: column; }
+
+.pc-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pc-msg {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pc-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.pc-msg.bot {
+  align-self: flex-start;
+  background: #f1f5f9;
+  color: #334155;
+  border-bottom-left-radius: 4px;
+}
+
+.pc-typing {
+  display: none;
+  align-self: flex-start;
+  padding: 10px 14px;
+  background: #f1f5f9;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+}
+
+.pc-typing-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.pc-typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: pcBounce 1.2s infinite;
+}
+
+.pc-typing-dot:nth-child(2) { animation-delay: .2s; }
+.pc-typing-dot:nth-child(3) { animation-delay: .4s; }
+
+@keyframes pcBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.pc-quick-btns {
+  padding: 8px 14px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pc-qbtn {
+  padding: 5px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.pc-qbtn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #e0e7ff;
+}
+
+.pc-input-area {
+  padding: 10px 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pc-input-wrapper {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  border-radius: 16px;
+  padding: 5px 6px;
+  border: 2px solid transparent;
+}
+
+.pc-input-wrapper:focus-within {
+  background: #fff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #e0e7ff;
+}
+
+.pc-chat-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 7px 10px;
+  font-size: 13px;
+  resize: none;
+  outline: none;
+  max-height: 90px;
+}
+
+.pc-send-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.pc-results-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pc-card {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.pc-card:hover {
+  border-color: #6366f1;
+  box-shadow: 0 4px 6px rgba(0,0,0,.07);
+}
+
+.pc-card.selected {
+  border-color: #6366f1;
+  background: #e0e7ff;
+}
+
+.pc-detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+
+/* ==================== 响应式适配 ==================== */
+@media (min-width: 769px) {
+  /* PC 模式 */
+  .app.mobile-layout { display: none; }
+  .pc-header { display: flex; }
+  .pc-main { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  /* 手机模式 */
+  .app.mobile-layout { display: flex; }
+  .pc-header, .pc-main { display: none; }
+}
+
 </style>
 </head>
 <body>
+<div class="app mobile-layout">
+
 <div class="app">
   <div class="nav">
     <button class="nbtn active" onclick="switchPage(this,'chat')">💬 AI对话</button>
@@ -337,6 +553,611 @@ function showDetail(idx) {
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
 
 init();
+</script>
+
+</div>
+<div class="app pc-layout">
+
+<!-- PC版顶部区域 -->
+<div class="pc-header" id="pc-header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">🚀</div>
+    <div>
+      <div style="font-size:18px;font-weight:700">星辉实习助手</div>
+      <div style="font-size:12px;color:#64748b">智能匹配 · 售前利器</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:24px">
+    <div style="text-align:center">
+      <div style="font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-total">0</div>
+      <div style="font-size:11px;color:#64748b">产品总数</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-industries">0</div>
+      <div style="font-size:11px;color:#64748b">行业覆盖</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:22px;font-weight:800;background:linear-gradient(135deg,#6366f1,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-types">0</div>
+      <div style="font-size:11px;color:#64748b">产品类型</div>
+    </div>
+  </div>
+</div>
+
+<!-- PC版三栏主区域 -->
+<div class="pc-main" id="pc-main">
+  <!-- 左侧：聊天面板 -->
+  <div class="panel pc-chat-panel" id="pc-chat-panel">
+    <div class="panel-head" style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:14px;font-weight:700">💬 AI 智能分析</span>
+    </div>
+    <div class="pc-messages" id="pc-messages">
+      <!-- 消息将动态插入 -->
+    </div>
+    <div class="pc-quick-btns">
+      <button class="pc-qbtn" onclick="pcSetInput('北京实习，远程优先')">🏙️ 北京远程</button>
+      <button class="pc-qbtn" onclick="pcSetInput('上海金融实习')">🌆 上海金融</button>
+      <button class="pc-qbtn" onclick="pcSetInput('远程实习')">🏠 纯远程</button>
+      <button class="pc-qbtn" onclick="pcSetInput('需要推荐信')">📝 推荐信</button>
+    </div>
+    <div class="pc-input-area">
+      <div class="pc-input-wrapper">
+        <textarea id="pc-input" class="pc-chat-input" placeholder="粘贴客户需求..." rows="1" onkeydown="pcHandleKey(event)" oninput="pcResize(this)"></textarea>
+        <button class="pc-send-btn" onclick="pcSend()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中间：搜索面板 -->
+  <div class="panel pc-search-panel" id="pc-search-panel">
+    <div class="panel-head" style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:14px;font-weight:700">🔍 产品搜索</span>
+    </div>
+    <div style="padding:12px 14px;border-bottom:1px solid #e2e8f0">
+      <div style="position:relative;margin-bottom:8px">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:#94a3b8">🔍</span>
+        <input type="text" id="pc-search-input" placeholder="搜索关键词..." style="width:100%;padding:9px 14px 9px 36px;border:2px solid #e2e8f0;border-radius:12px;font-size:13px;outline:none" oninput="pcDoSearch()">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <select id="pc-filter-type" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px" onchange="pcDoSearch()"><option value="">全部类型</option></select>
+        <select id="pc-filter-location" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px" onchange="pcDoSearch()"><option value="">全部城市</option><option>北京</option><option>上海</option><option>深圳</option><option>广州</option></select>
+      </div>
+    </div>
+    <div id="pc-results-count" style="padding:6px 14px;font-size:12px;color:#64748b;background:#f8fafc">加载中...</div>
+    <div class="pc-results-list" id="pc-results-list"></div>
+  </div>
+
+  <!-- 右侧：详情面板 -->
+  <div class="panel pc-detail-panel" id="pc-detail-panel">
+    <div class="panel-head" style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+      <span style="font-size:14px;font-weight:700">📋 产品详情</span>
+    </div>
+    <div class="pc-detail-content" id="pc-detail-content">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;color:#94a3b8">
+        <div style="font-size:56px;margin-bottom:14px;opacity:0.5">📦</div>
+        <div style="font-size:15px;color:#64748b;margin-bottom:6px">选择产品查看详情</div>
+        <div style="font-size:13px">点击中间列表中的产品卡片</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+// 手机版 JS
+
+const KB = JSON.parse(document.getElementById('kb-data').textContent);
+const API_KEY = 'sk-8eb1dfe1032e457c9ee19dcdccb247e5';
+
+function init() {
+  const inds = [...new Set(KB.map(i=>i.industry).filter(Boolean))].sort();
+  const types = [...new Set(KB.map(i=>i.type).filter(Boolean))].sort();
+  inds.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; document.getElementById('sel-industry').appendChild(o); });
+  types.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; document.getElementById('sel-type').appendChild(o); });
+  search();
+}
+
+function switchPage(btn, n) {
+  document.getElementById('page-'+n).classList.add('active');
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(n==='search') search();
+}
+
+function onKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function resize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function setInput(t){ const el=document.getElementById('input'); el.value=t; resize(el); el.focus(); }
+
+function send() {
+  const el=document.getElementById('input');
+  const txt=el.value.trim();
+  if(!txt) return;
+  addMsg(txt,'user');
+  el.value='';
+  el.style.height='auto';
+  document.getElementById('typing').style.display='flex';
+  scrollBottom();
+  analyze(txt);
+}
+
+function addMsg(text,type) {
+  const div=document.createElement('div');
+  div.className='msg '+type;
+  div.textContent=text;
+  document.getElementById('msgs').insertBefore(div,document.getElementById('typing'));
+  scrollBottom();
+}
+
+function scrollBottom() {
+  document.getElementById('msgs').scrollTop=document.getElementById('msgs').scrollHeight;
+}
+
+async function analyze(text) {
+  try {
+    const cands=filter(text);
+    if(cands.length===0) {
+      document.getElementById('typing').style.display='none';
+      addMsg('抱歉，暂无完全匹配的岗位。请尝试：\n• 调整城市（北上广深）\n• 改变行业关键词（金融/科技/咨询）\n• 放宽实习形式（实地/远程）','bot');
+      return;
+    }
+    // 构建更丰富的候选信息
+    const list=cands.slice(0,6).map((item,i)=>{
+      const name=item.company||item.position||'科研助理';
+      const pos=item.position||item.company||'研究助理';
+      const jd=(item.jd||'暂无描述').substring(0,200).replace(/\n/g,' ');
+      const loc=item.location||'待定';
+      const form=item.form||'实地';
+      const dur=item.duration||'面议';
+      const req=item.requirements||'简历评估+面试';
+      const ben=(item.benefits||'实习证明/推荐信').substring(0,60);
+      return`【${i+1}】${name}
+岗位：${pos}
+地点：${loc} | 形式：${form} | 时长：${dur}
+申请要求：${req}
+项目收获：${ben}
+工作内容：${jd}`;
+    }).join('\n\n');
+
+    const systemPrompt=`你是星辉实习平台的专业顾问，擅长精准匹配学员需求与实习岗位。
+
+【回复风格】
+- 专业、亲切、有温度
+- 像经验丰富的人脉顾问在帮助朋友
+- 信息层次分明，重点突出
+
+【输出格式】
+━━━━━━━━━━━━━━━━━━━━
+开头：1-2句总结需求，整体亮点
+━━━━━━━━━━━━━━━━━━━━
+
+▌ 方向一：公司名 - 岗位名
+   城市 | 类型 | 时长
+   核心内容：（从JD提炼，详细描述工作内容）
+   技能要求：（从requirements提炼，需要什么背景/能力）
+   适合人群：（适合什么专业的学生）
+
+▌ 方向二：...
+━━━━━━━━━━━━━━━━━━━━
+结尾引导语
+
+【重要规则】
+- 只推荐候选岗位中的，禁止编造
+- 不显示价格
+- 突出差异化（不同公司/行业/形式）
+- 推荐3-5个最匹配的
+- 绝对禁止：不要用任何Markdown格式（**加粗**、*斜体*、#标题、-列表）
+- 只能用纯文本符号：━━━ ▌ · ：（）
+- 每个岗位要写详细：核心内容、技能要求、适合人群`;
+
+    const resp=await fetch('https://api.deepseek.com/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_KEY},
+      body:JSON.stringify({
+        model:'deepseek-chat',
+        messages:[
+          {role:'system',content:systemPrompt},
+          {role:'user',content:'客户需求：'+text+'\n\n【可选岗位】：\n'+list}
+        ],
+        temperature:0.5,
+        max_tokens:1200
+      })
+    });
+    const data=await resp.json();
+    document.getElementById('typing').style.display='none';
+    if(data.error){ addMsg('💡 为您推荐：\n\n'+fallback(text),'bot'); return; }
+
+    // 清理Markdown格式
+    let reply=data.choices[0].message.content.trim();
+    reply=reply.replace(/\*\*(.+?)\*\*/g,'$1');  // 去掉**加粗**
+    reply=reply.replace(/\*(.+?)\*/g,'$1');      // 去掉*斜体*
+    reply=reply.replace(/^#+\s+/gm,'');           // 去掉#标题
+    reply=reply.replace(/^[-*+]\s+/gm,'· ');     // 列表改为 ·
+    reply=reply.replace(/`(.+?)`/g,'$1');        // 去掉`代码`
+
+    addMsg(reply,'bot');
+  } catch(err) {
+    console.error(err);
+    document.getElementById('typing').style.display='none';
+    addMsg('💡 为您推荐：\n\n'+fallback(text),'bot');
+  }
+}
+
+function filter(text) {
+  const t=text.toLowerCase();
+  const CITIES=['北京','上海','深圳','广州','杭州','成都','南京','武汉','西安','苏州','天津'];
+  const cities=CITIES.filter(c=>t.includes(c));
+
+  // 扩展行业关键词
+  const keywords=[
+    ['投行',['投行','ibd','并购','承销','股权','债券','行研','券商']],
+    ['金融',['金融','银行','证券','基金','信托','保险','资管','期货','投资']],
+    ['咨询',['咨询','顾问','麦肯锡','贝恩','波士顿']],
+    ['四大',['四大会计师事务所','普华永道','德勤','安永','毕马威','四大']],
+    ['科技',['科技','技术','互联网','计算机','软件','AI','数据','算法','开发']],
+    ['市场',['市场','营销','传媒','广告','品牌','运营','新媒体','电商']],
+    ['化学',['化学','化工','材料','生物','医药','制药','医疗','实验室','科研院所']],
+    ['法律',['法律','法务','合规','律师']],
+    ['制造',['制造','工业','生产','供应链','质量']]
+  ];
+
+  let scored=KB.map(item=>{
+    let s=0;
+    const allText=(item.company||'')+(item.position||'')+(item.industry||'')+(item.jd||'')+(item.type||'').toLowerCase();
+
+    // 城市匹配
+    if(cities.length>0){
+      if(item.location&&cities.some(c=>item.location.includes(c))) s+=25;
+    }
+
+    // 实习形式匹配
+    if(t.includes('远程')&&(item.form||'').includes('远程')) s+=10;
+    if(t.includes('实地')&&(item.form||'').includes('实地')) s+=10;
+
+    // 关键词匹配
+    keywords.forEach(([cat,words])=>{
+      if(words.some(w=>t.includes(w))){
+        if(words.some(w=>allText.includes(w))) s+=15;
+      }
+    });
+
+    // 公司精确匹配
+    const companyUpper=(item.company||'').toUpperCase();
+    if(t.includes('中科院')&&companyUpper.includes('中科院')) s+=30;
+    if(t.includes('中金')&&companyUpper.includes('中金')) s+=25;
+    if(t.includes('华泰')&&companyUpper.includes('华泰')) s+=25;
+
+    return{item,s};
+  });
+  scored.sort((a,b)=>b.s-a.s);
+  return scored.filter(m=>m.s>5).slice(0,15).map(m=>m.item);
+}
+
+function fallback(text) {
+  const cands=filter(text);
+  if(cands.length===0) return '暂无匹配，请尝试其他关键词。';
+  let r='';
+  cands.slice(0,6).forEach(item=>{ r+='▌'+item.company+' - '+item.position+'\n   '+(item.location||'待定')+' | '+(item.type||'')+'\n\n'; });
+  return r+'💬 点击【产品搜索】查看更多。';
+}
+
+function search() {
+  const type=document.getElementById('sel-type').value;
+  const ind=document.getElementById('sel-industry').value;
+  const loc=document.getElementById('sel-location').value;
+  let res=KB.filter(item=>{
+    if(type&&item.type!==type) return false;
+    if(ind&&item.industry!==ind) return false;
+    if(loc&&item.location&&!item.location.includes(loc)) return false;
+    return true;
+  });
+  document.getElementById('count').textContent='共 '+res.length+' 个结果';
+  document.getElementById('cards').innerHTML=res.slice(0,30).map(item=>
+    '<div class="card" onclick="showDetail('+KB.indexOf(item)+')">'+
+    '<div class="card-co">'+item.company+'</div>'+
+    '<div class="card-pos">'+item.position+'</div>'+
+    '<div><span class="tag">'+(item.type||'')+'</span><span class="tag">'+(item.form||'')+'</span></div>'+
+    '<div class="card-meta">'+(item.location||'待定')+' · '+(item.duration||'')+'</div>'+
+    '</div>'
+  ).join('');
+}
+
+function showDetail(idx) {
+  const item=KB[idx];
+  if(!item) return;
+  document.getElementById('drawer-title').textContent=item.company;
+  document.getElementById('drawer-body').innerHTML=
+    '<div class="row"><div class="row-lbl">岗位</div><div class="row-val">'+(item.position||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">行业</div><div class="row-val">'+(item.industry||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">类型</div><div class="row-val">'+(item.type||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">形式</div><div class="row-val">'+(item.form||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">城市</div><div class="row-val">'+(item.location||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">时长</div><div class="row-val">'+(item.duration||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">收获</div><div class="row-val">'+(item.benefits||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">要求</div><div class="row-val">'+(item.requirements||'-')+'</div></div>'+
+    '<div class="row"><div class="row-lbl">JD</div><div class="row-val">'+((item.jd||'-').replace(/\n/g,'<br>'))+'</div></div>'+
+    (item.note?'<div class="row"><div class="row-lbl">备注</div><div class="row-val">'+item.note+'</div></div>':'');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
+
+init();
+
+
+// PC 版功能
+
+// ==================== PC 版功能 ====================
+let pcSelectedIdx = -1;
+
+function pcInit() {
+  // 更新统计
+  const inds = new Set(KB_ITEMS.map(i=>i.industry).filter(Boolean));
+  const types = new Set(KB_ITEMS.map(i=>i.type).filter(Boolean));
+  const statTotal = document.getElementById("stat-total");
+  const statInds = document.getElementById("stat-industries");
+  const statTypes = document.getElementById("stat-types");
+  if (statTotal) statTotal.textContent = KB_ITEMS.length;
+  if (statInds) statInds.textContent = inds.size;
+  if (statTypes) statTypes.textContent = types.size;
+
+  // 填充筛选器
+  const selType = document.getElementById("pc-filter-type");
+  if (selType) {
+    [''].concat([...types]).forEach(t => {
+      const o = document.createElement("option");
+      o.value = t;
+      o.textContent = t || '全部类型';
+      selType.appendChild(o);
+    });
+  }
+
+  // 添加欢迎消息
+  pcAddBotMsg("👋 欢迎使用星辉售前助手！
+
+请描述客户需求，我来为您智能匹配最合适的产品。");
+  pcDoSearch();
+}
+
+function pcSetInput(t) {
+  const el = document.getElementById("pc-input");
+  if (el) { el.value = t; pcResize(el); el.focus(); }
+}
+
+function pcHandleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    pcSend();
+  }
+}
+
+function pcResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+
+function pcAddUserMsg(text) {
+  const msgs = document.getElementById("pc-messages");
+  if (!msgs) return;
+  const d = document.createElement("div");
+  d.className = "pc-msg user";
+  d.textContent = text;
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function pcAddBotMsg(text) {
+  const msgs = document.getElementById("pc-messages");
+  if (!msgs) return;
+  const d = document.createElement("div");
+  d.className = "pc-msg bot";
+  d.textContent = text;
+  msgs.insertBefore(d, msgs.querySelector(".pc-typing"));
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function pcShowTyping(show) {
+  const t = document.querySelector(".pc-typing");
+  if (t) t.style.display = show ? "flex" : "none";
+}
+
+async function pcSend() {
+  const el = document.getElementById("pc-input");
+  if (!el) return;
+  const txt = el.value.trim();
+  if (!txt) return;
+  el.value = "";
+  el.style.height = "auto";
+  pcAddUserMsg(txt);
+  pcShowTyping(true);
+
+  try {
+    const result = await pcAnalyzeWithAI(txt);
+    pcShowTyping(false);
+    pcAddBotMsg(result);
+  } catch (err) {
+    pcShowTyping(false);
+    pcAddBotMsg("⚠️ 分析失败，请稍后重试。");
+  }
+}
+
+async function pcAnalyzeWithAI(text) {
+  const candidates = pcLocalFilter(text);
+  if (candidates.length === 0) {
+    return "未找到匹配的实习岗位，请尝试其他关键词。";
+  }
+
+  const candidateList = candidates.map((item, i) => {
+    return `[${i+1}] ${item.company} | ${item.position} | ${item.industry || ''} | ${item.location || '不限'}`;
+  }).join("\n");
+
+  const systemPrompt = `你是星辉实习平台的专业售前顾问。根据客户需求从候选岗位中挑选最匹配的，用专业销售风格输出。
+
+【输出格式】
+1. 第一段：总结需求+整体亮点
+2. 按方向分类展示（▌方向名）
+3. 每个岗位：公司名+岗位名 · 城市/类型/时长 · 核心职责
+4. 结尾引导行动
+
+【规则】
+- 只推荐候选岗位中的，禁止编造
+- 挑选3-6个最匹配的
+- 不显示价格
+- 专业亲切的语气`;
+
+  const userPrompt = `客户需求：${text}\n\n候选岗位：\n${candidateList}`;
+
+  try {
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer sk-8eb1dfe1032e457c9ee19dcdccb247e5"
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 1000
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    return data.choices[0].message.content.trim();
+  } catch (err) {
+    console.error("AI分析失败:", err);
+    return "⚠️ AI分析暂时不可用，请稍后重试。";
+  }
+}
+
+function pcLocalFilter(text) {
+  const t = text.toLowerCase();
+  const CITIES = ["北京","上海","广州","深圳","杭州","南京","成都","武汉","重庆","西安","苏州","天津"];
+
+  let scored = KB_ITEMS.map(item => {
+    let s = 0;
+    const cities = CITIES.filter(c => t.includes(c));
+    if (cities.length > 0 && item.location && cities.some(c => item.location.includes(c))) s += 15;
+    const kw = ((item.company || "") + (item.position || "") + (item.industry || "") + (item.jd || "")).toLowerCase();
+    if (t.includes("远程") && (item.form || "").includes("远程")) s += 8;
+    if (t.includes("实地") && (item.form || "").includes("实地")) s += 8;
+    if (t.includes("投行") || t.includes("金融")) { if ((item.industry || "").includes("金融")) s += 10; }
+    if (t.includes("科技") || t.includes("技术")) { if ((item.industry || "").includes("科技")) s += 10; }
+    if (t.includes("咨询")) { if ((item.industry || "").includes("咨询")) s += 10; }
+    if (t.includes("市场") || t.includes("营销")) { if ((item.industry || "").includes("市场")) s += 10; }
+    return { item, s };
+  });
+
+  scored.sort((a, b) => b.s - a.s);
+  return scored.filter(m => m.s > 3).slice(0, 15).map(m => m.item);
+}
+
+function pcDoSearch() {
+  const kw = (document.getElementById("pc-search-input")?.value || "").toLowerCase().trim();
+  const type = document.getElementById("pc-filter-type")?.value;
+  const loc = document.getElementById("pc-filter-location")?.value;
+
+  let res = KB_ITEMS.filter(item => {
+    if (type && item.type !== type) return false;
+    if (loc && !(item.location && item.location.includes(loc))) return false;
+    if (kw) {
+      const t = ((item.company || "") + " " + (item.position || "") + " " + (item.industry || "")).toLowerCase();
+      if (!t.includes(kw)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById("pc-results-count");
+  if (countEl) countEl.textContent = "共 " + res.length + " 个结果";
+
+  const listEl = document.getElementById("pc-results-list");
+  if (!listEl) return;
+
+  if (!res.length) {
+    listEl.innerHTML = "<div style='padding:40px;text-align:center;color:#94a3b8'>未找到匹配产品</div>";
+    return;
+  }
+
+  listEl.innerHTML = res.map((item, i) => {
+    const idx = KB_ITEMS.indexOf(item);
+    return `<div class="pc-card" id="pc-card-${idx}" onclick="pcSelectCard(${idx})">
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(item.company || "")}</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:8px">${esc(item.position || "")}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${item.industry ? `<span style="font-size:11px;background:#e0e7ff;color:#4f46e5;padding:2px 8px;border-radius:10px">🏢 ${esc(item.industry)}</span>` : ""}
+        ${item.location ? `<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:10px">📍 ${esc(item.location)}</span>` : ""}
+        ${item.type ? `<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:10px">📋 ${esc(item.type)}</span>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function pcSelectCard(idx) {
+  document.querySelectorAll(".pc-card").forEach(c => c.classList.remove("selected"));
+  const card = document.getElementById("pc-card-" + idx);
+  if (card) card.classList.add("selected");
+  pcSelectedIdx = idx;
+  pcShowDetail(idx);
+}
+
+function pcShowDetail(idx) {
+  const item = KB_ITEMS[idx];
+  if (!item) return;
+
+  const detailEl = document.getElementById("pc-detail-content");
+  if (!detailEl) return;
+
+  detailEl.innerHTML = `
+    <div style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;padding:18px;border-radius:12px;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:800;margin-bottom:8px">${esc(item.company || "")}</div>
+      <div style="font-size:13px;opacity:0.85">${esc(item.position || "")}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${item.industry ? `<span style="font-size:12px;background:#e0e7ff;color:#4f46e5;padding:4px 12px;border-radius:12px">🏢 ${esc(item.industry)}</span>` : ""}
+      ${item.location ? `<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:4px 12px;border-radius:12px">📍 ${esc(item.location)}</span>` : ""}
+      ${item.type ? `<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:4px 12px;border-radius:12px">📋 ${esc(item.type)}</span>` : ""}
+      ${item.duration ? `<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:4px 12px;border-radius:12px">⏱ ${esc(item.duration)}</span>` : ""}
+    </div>
+    <div style="margin-bottom:12px"><strong style="font-size:13px">💰 价格：</strong>${item.price12m ? "¥" + item.price12m + "/12个月" : ""} ${item.price3m ? "| ¥" + item.price3m + "/3个月" : ""}</div>
+    <div style="margin-bottom:12px"><strong style="font-size:13px">📝 岗位描述：</strong><pre style="white-space:pre-wrap;margin-top:6px;background:#f8fafc;padding:10px;border-radius:8px;font-size:13px">${esc(item.jd || "暂无")}</pre></div>
+    <div style="margin-bottom:12px"><strong style="font-size:13px">✅ 附加福利：</strong>${esc(item.benefits || "暂无")}</div>
+    ${item.requirements ? `<div style="margin-bottom:12px"><strong style="font-size:13px">📋 申请要求：</strong>${esc(item.requirements)}</div>` : ""}
+    ${item.note ? `<div style="margin-bottom:16px"><strong style="font-size:13px">💡 备注：</strong>${esc(item.note)}</div>` : ""}
+    <button onclick="pcGenerateReply(${idx})" style="width:100%;padding:12px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:12px">生成回复话术</button>
+    <div id="pc-reply-area" style="display:none">
+      <textarea id="pc-reply-text" style="width:100%;min-height:120px;padding:12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px" placeholder="生成的回复话术"></textarea>
+      <button onclick="pcCopyReply()" style="width:100%;padding:10px;background:#52c41a;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px">复制话术</button>
+    </div>
+  `;
+}
+
+function pcGenerateReply(idx) {
+  const item = KB_ITEMS[idx];
+  if (!item) return;
+  const reply = `您好！感谢您的咨询！\n\n推荐您了解【${item.company} - ${item.position}】：\n\n📍 地点：${item.location || "待定"}\n📋 类型：${item.type || ""}\n⏱ 时长：${item.duration || ""}\n\n${item.jd || ""}\n\n感兴趣的话可以进一步沟通~`;
+  const area = document.getElementById("pc-reply-area");
+  const textarea = document.getElementById("pc-reply-text");
+  if (area) area.style.display = "block";
+  if (textarea) textarea.value = reply;
+}
+
+function pcCopyReply() {
+  const textarea = document.getElementById("pc-reply-text");
+  if (!textarea) return;
+  navigator.clipboard.writeText(textarea.value).then(() => {
+    alert("已复制到剪贴板！");
+  }).catch(() => {
+    textarea.select();
+    document.execCommand("copy");
+    alert("已复制到剪贴板！");
+  });
+}
+
+// 页面加载完成后初始化
+document.addEventListener("DOMContentLoaded", pcInit);
+
 </script>
 </body>
 </html>
